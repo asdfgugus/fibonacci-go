@@ -6,32 +6,33 @@ import (
 	"time"
 )
 
-var inputNumber int = 10
-var wg sync.WaitGroup
-var mu sync.Mutex
+var inputNumber int = 5
 
-// Define the DivideAndConquerable interface
+// DivideAndConquerable defines the interface of the base code
 type DivideAndConquerable interface {
 	IsBasic() bool
 	BaseFun() interface{}
 	Decompose() []DivideAndConquerable
 	Recombine(intermediateResults []interface{}) interface{}
-	DivideAndConquer(ch chan interface{})
+	DivideAndConquer() interface{}
 }
 
-// Implement the DivideAndConquerable interface for a concrete type
+// Fibonacci defines the struct for computing Fibonacci sequence
 type Fibonacci struct {
 	input int
 }
 
+// IsBasic returns the basic cases of the Fibonacci sequence
 func (f Fibonacci) IsBasic() bool {
 	return f.input == 0 || f.input == 1
 }
 
+// BaseFun checks if it is a base case of the Fibonacci sequence
 func (f Fibonacci) BaseFun() interface{} {
 	return f.input
 }
 
+// Decompose returns the subcomponents of the Fibonacci sequence
 func (f Fibonacci) Decompose() []DivideAndConquerable {
 	return []DivideAndConquerable{
 		Fibonacci{input: (f.input - 1)},
@@ -39,6 +40,7 @@ func (f Fibonacci) Decompose() []DivideAndConquerable {
 	}
 }
 
+// Recomibe returns the sum of the intermidate results of the Fibonacci sequence
 func (f Fibonacci) Recombine(intermediateResults []interface{}) interface{} {
 	result := 0
 	for _, r := range intermediateResults {
@@ -47,47 +49,39 @@ func (f Fibonacci) Recombine(intermediateResults []interface{}) interface{} {
 	return result
 }
 
-func (f Fibonacci) DivideAndConquer(ch chan interface{}) {
-	defer wg.Done()
+// DivideAndConquer calculates the Fibonacci sequence
+func (f Fibonacci) DivideAndConquer() interface{} {
 	if f.IsBasic() {
-		ch <- f.BaseFun()
-		return
+		return f.BaseFun()
 	}
 	subcomponents := f.Decompose()
-	intermediateResults := make([]interface{}, len(subcomponents))
-	for i, subcomponent := range subcomponents {
+	var wg sync.WaitGroup
+	ch := make(chan interface{}, len(subcomponents))
+	for _, subcomponent := range subcomponents {
 		wg.Add(1)
-		go func(i int, sub DivideAndConquerable) {
-			sub.DivideAndConquer(ch)
-		}(i, subcomponent)
+		go func(subcomponent DivideAndConquerable) {
+			defer wg.Done()
+			ch <- subcomponent.DivideAndConquer()
+		}(subcomponent)
 	}
-
-	for i := range subcomponents {
-		intermediateResults[i] = <-ch
-	}
-
-	mu.Lock()
-	ch <- f.Recombine(intermediateResults)
-	mu.Unlock()
-}
-
-func main() {
-	start := time.Now()
-	ch := make(chan interface{})
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		Fibonacci{input: 30}.DivideAndConquer(ch)
-	}()
 
 	go func() {
 		wg.Wait()
 		close(ch)
 	}()
 
-	for result := range ch {
-		fmt.Printf("Result: %v\n", result)
+	intermediateResults := make([]interface{}, len(subcomponents))
+	for i := range subcomponents {
+		intermediateResults[i] = <-ch
 	}
 
-	fmt.Printf("Duration: %v\n", time.Since(start))
+	return f.Recombine(intermediateResults)
+}
+
+func main() {
+	start := time.Now()
+	result := Fibonacci{input: inputNumber}.DivideAndConquer()
+	end := time.Now()
+	fmt.Printf("Result: %v\n", result)
+	fmt.Printf("Duration: %v\n", end.Sub(start))
 }

@@ -8,10 +8,10 @@ import (
 
 var wg sync.WaitGroup
 var mu sync.Mutex
-var inputNumbers = []int{2,3,4,5,6,7,8,9,10,11,12,13,18,22,25,11,31,33,40}
+var inputNumbers = []int{2, 3, 4, 5}
 var fibCache map[int]interface{} = make(map[int]interface{})
 
-// Define the DivideAndConquerable interface
+// DivideAndConquerable defines the interface of the base code
 type DivideAndConquerable interface {
 	IsBasic() bool
 	BaseFun() interface{}
@@ -20,19 +20,22 @@ type DivideAndConquerable interface {
 	DivideAndConquer() interface{}
 }
 
-// Implement the DivideAndConquerable interface for a concrete type
+// Fibonacci defines the struct for computing Fibonacci sequence
 type Fibonacci struct {
 	input int
 }
 
+// IsBasic returns the basic cases of the Fibonacci sequence
 func (f Fibonacci) IsBasic() bool {
 	return f.input == 0 || f.input == 1
 }
 
+// BaseFun checks if it is a base case of the Fibonacci sequence
 func (f Fibonacci) BaseFun() interface{} {
 	return f.input
 }
 
+// Decompose returns the subcomponents of the Fibonacci sequence
 func (f Fibonacci) Decompose() []DivideAndConquerable {
 	return []DivideAndConquerable{
 		Fibonacci{input: (f.input - 1)},
@@ -40,6 +43,7 @@ func (f Fibonacci) Decompose() []DivideAndConquerable {
 	}
 }
 
+// Recomibe returns the sum of the intermidate results of the Fibonacci sequence
 func (f Fibonacci) Recombine(intermediateResults []interface{}) interface{} {
 	result := 0
 	for _, r := range intermediateResults {
@@ -48,6 +52,7 @@ func (f Fibonacci) Recombine(intermediateResults []interface{}) interface{} {
 	return result
 }
 
+// DivideAndConquer calculates the Fibonacci sequence
 func (f Fibonacci) DivideAndConquer() interface{} {
 	mu.Lock()
 	cachedResult, exists := fibCache[f.input]
@@ -71,6 +76,7 @@ func (f Fibonacci) DivideAndConquer() interface{} {
 }
 
 func main() {
+	var end time.Time
 	start := time.Now()
 	ch := make(chan interface{}, len(inputNumbers))
 
@@ -84,6 +90,7 @@ func main() {
 
 	go func() {
 		wg.Wait()
+		end = time.Now()
 		close(ch)
 	}()
 
@@ -91,5 +98,5 @@ func main() {
 		fmt.Printf("Result: %v\n", result)
 	}
 
-	fmt.Printf("Duration: %v\n", time.Since(start))
+	fmt.Printf("Duration: %v\n", end.Sub(start))
 }

@@ -5,7 +5,9 @@ import (
 	"time"
 )
 
-// Define the DivideAndConquerable interface
+var inputNumber int = 5
+
+// DivideAndConquerable defines the interface of the base code
 type DivideAndConquerable interface {
 	IsBasic() bool
 	BaseFun() interface{}
@@ -14,19 +16,22 @@ type DivideAndConquerable interface {
 	DivideAndConquer() interface{}
 }
 
-// Implement the DivideAndConquerable interface for a concrete type
+// Fibonacci defines the struct for computing Fibonacci sequence
 type Fibonacci struct {
 	input int
 }
 
+// IsBasic returns the basic cases of the Fibonacci sequence
 func (f Fibonacci) IsBasic() bool {
 	return f.input == 0 || f.input == 1
 }
 
+// BaseFun checks if it is a base case of the Fibonacci sequence
 func (f Fibonacci) BaseFun() interface{} {
 	return f.input
 }
 
+// Decompose returns the subcomponents of the Fibonacci sequence
 func (f Fibonacci) Decompose() []DivideAndConquerable {
 	return []DivideAndConquerable{
 		Fibonacci{input: (f.input - 1)},
@@ -34,6 +39,7 @@ func (f Fibonacci) Decompose() []DivideAndConquerable {
 	}
 }
 
+// Recomibe returns the sum of the intermidate results of the Fibonacci sequence
 func (f Fibonacci) Recombine(intermediateResults []interface{}) interface{} {
 	result := 0
 	for _, r := range intermediateResults {
@@ -42,6 +48,7 @@ func (f Fibonacci) Recombine(intermediateResults []interface{}) interface{} {
 	return result
 }
 
+// DivideAndConquer calculates the Fibonacci sequence
 func (f Fibonacci) DivideAndConquer() interface{} {
 	if f.IsBasic() {
 		return f.BaseFun()
@@ -49,27 +56,22 @@ func (f Fibonacci) DivideAndConquer() interface{} {
 	subcomponents := f.Decompose()
 	intermediateResults := make([]interface{}, len(subcomponents))
 	ch := make(chan interface{}, len(subcomponents))
-
-	// Launch goroutines for recursive calls
 	for _, subcomponent := range subcomponents {
 		go func(subcomponent DivideAndConquerable) {
 			ch <- subcomponent.DivideAndConquer()
 		}(subcomponent)
 	}
-
-	// Collect results from goroutines
 	for i := 0; i < len(subcomponents); i++ {
 		intermediateResults[i] = <-ch
 	}
-
 	close(ch)
-
 	return f.Recombine(intermediateResults)
 }
 
 func main() {
 	start := time.Now()
-	result := Fibonacci{input: 40}.DivideAndConquer()
+	result := Fibonacci{input: inputNumber}.DivideAndConquer()
+	end := time.Now()
 	fmt.Printf("Result: %v\n", result)
-	fmt.Printf("Duration: %v\n", time.Since(start))
+	fmt.Printf("Duration: %v\n", end.Sub(start))
 }
