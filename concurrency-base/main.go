@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"time"
 )
 
-var wg sync.WaitGroup
+var inputNumber int = 5
 
 // Define the DivideAndConquerable interface
 type DivideAndConquerable interface {
@@ -59,28 +58,7 @@ func (f Fibonacci) DivideAndConquer() interface{} {
 
 func main() {
 	start := time.Now()
-	ch := make(chan interface{}, 2)
-
-	wg.Add(1)
-	go func(ch chan interface{}) {
-		defer wg.Done()
-		ch <- Fibonacci{input: 30}.DivideAndConquer()
-	}(ch)
-
-	wg.Add(1)
-	go func(ch chan interface{}) {
-		defer wg.Done()
-		ch <- Fibonacci{input: 30}.DivideAndConquer()
-	}(ch)
-
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
-
-	for result := range ch {
-		fmt.Printf("Result: %v\n", result)
-	}
-
+	result := Fibonacci{input: inputNumber}.DivideAndConquer()
+	fmt.Printf("Result: %v\n", result)
 	fmt.Printf("Duration: %v\n", time.Since(start))
 }
