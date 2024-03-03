@@ -55,6 +55,7 @@ func (f Fibonacci) DivideAndConquer() interface{} {
 		return f.BaseFun()
 	}
 	subcomponents := f.Decompose()
+	
 	var wg sync.WaitGroup
 	ch := make(chan interface{}, len(subcomponents))
 	for _, subcomponent := range subcomponents {
